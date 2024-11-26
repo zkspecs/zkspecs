@@ -556,23 +556,11 @@ Based on the UIDAI documentation referenced (User Manual QR Code 2019), the QR c
 3. **Iterate Through Byte Array**:
 
    - Loop through the byte array and identify indices where the value `255` appears.
-   - Use these indices to fill the delimitersIndices array.
+   - Use these indices to fill the `delimitersIndices` array, that will help us parse the data inside of the circuit.
 
 4. **Extract Fields**:
 
-   - Use the indices of `255` as delimiters to slice the data array.
-   - Each slice represents a field value.
-
-5. **Decode Field Values**:
-
-   - Field values may be encoded in UTF-8 or another character encoding. Decode accordingly.
-   - If numeric, parse into numbers. If string data, interpret as text.
-
-6. **Map to Aadhaar Fields**:
-   - Map the extracted fields to their corresponding Aadhaar attributes, as defined in the documentation.
-   - Attributes may include name, address, gender, date of birth, and more.
-
-Based on the information provided, here's an updated technical explanation and code structure for parsing Aadhaar QR code data (V2) with the new schema:
+   - Use the `delimitersIndices` to slice the `qrDataPadded` array.
 
 ### **Aadhaar QR Code Data Schema (V2)**
 
