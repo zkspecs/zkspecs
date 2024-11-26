@@ -5,22 +5,22 @@
 slug: CS-02
 title: CS-02/ANON-AADHAAR-V2
 name: Anonymous Aadhaar Verification Protocol
-status: raw
+status: draft
 category: Standards Track
-editor: [Yanis Meziane] <yanis@pse.dev>
+editor: Yanis Meziane <yanis@pse.dev>
 contributors:
 
-- [@Saleelp, @Oskarth]
-  tags:
-- zero-knowledge
-- identity
-- privacy
+- Saleel P <saleel@saleel.xyz>, Oskar Thoren <oskarth@titanproxy.com>
+- tags:
+  - zero-knowledge
+  - identity
+  - privacy
 
 ---
 
 # Change Process
 
-This document is governed by the [1/COSS](https://rfc.vac.dev/spec/1/).
+This document is governed by the [1/COSS](../1) (COSS).
 
 # Language
 
@@ -28,16 +28,18 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 # Abstract
 
-Anon Aadhaar is a zero-knowledge protocol enabling privacy-preserving verification of the Aadhaar Secure QR Code. The protocol allows proving possession of valid UIDAI-issued Aadhaar documents without revealing personal information, using RSA signature verification in zero-knowledge combined with selective disclosure mechanisms.
+Anon Aadhaar is a zero-knowledge protocol enabling privacy-preserving verification of the [Aadhaar Secure QR Code](https://uidai.gov.in/en/ecosystem/authentication-devices-documents/qr-code-reader.html). [Aadhaar](https://en.wikipedia.org/wiki/Aadhaar) is a unique identity system in India, issued by the government, containing a 12-digit identification number linked to an individual's biometric and demographic data. The Aadhaar Secure QR code is an offline KYC process where a legitimate Aadhaar identity owner can store a QR code representing their concatenated identity and a digital signature of it. The protocol leverages this digital signature to allow proving possession of valid UIDAI-issued Aadhaar documents without revealing personal information, using RSA-SHA256 signature verification in zero-knowledge combined with selective disclosure mechanisms.
 
 # Motivation
 
-Current Aadhaar verification methods expose sensitive personal data. This specification provides:
+Current Aadhaar verification methods expose sensitive personal data, as the verifier of the signature requires full access to the entire identity. This approach compromises user privacy and limits the applicability of Aadhaar in decentralized and trustless systems.
 
-- Privacy-preserving verification of government-issued identity
-- Selective disclosure of specific attributes
-- Prevention of identity reuse through nullifiers
-- Decentralized verification without trusted intermediaries (e.g. verifying proof of a valid Aadhaar on the EVM)
+This protocol offers a solution for privacy-preserving and decentralized identity verification, addressing these challenges by enabling:
+
+- **Privacy-preserving verification of government-issued identity**: Ensuring that sensitive personal data is not exposed during verification.
+- **Selective disclosure of specific attributes**: Allowing users to reveal only the necessary attributes, such as age or residency, without disclosing the full identity.
+- **Prevention of identity reuse through nullifiers**: Guaranteeing that identity proofs are unique and cannot be reused fraudulently.
+- **Decentralized verification without trusted intermediaries**: Supporting verification on decentralized systems, such as validating proof of a valid Aadhaar on public decentralized system, like Byzantine system or a blockchain.
 
 # Specification
 
@@ -45,10 +47,58 @@ Current Aadhaar verification methods expose sensitive personal data. This specif
 
 Implementations MUST provide:
 
-1. RSA-2048 signature verification
-2. SHA-256 hashing
-3. QR code data parsing
-4. Secure random number generation
+### 1. SHA-256 Hashing
+
+To process the plaintext data, the SHA-256 hash of the data must be computed within the circuit. This is necessary because the Aadhaar Secure QR Code signs the hash of the data, not the plaintext itself. The protocol leverages the SHA-256 hashing function, as it is currently used in Aadhaar Secure QR Code specifications.
+
+### 2. RSA-2048 Signature Verification
+
+The RSA-2048 signature verification must also be performed within the circuit. Constraining this process inside the circuit allows the proof to validate the correct execution of the signature verification against the specified public key. This ensures the authenticity of the signed data without exposing sensitive information.
+
+### 3. QR Code Data Parsing and Selective Disclosure
+
+Once the signature is verified, the protocol ensures the data is authenticated. At this stage, specific identity attributes can be selectively disclosed and extracted from the QR code data. These attributes include:
+
+- Photo
+- Birthdate
+- Gender
+- State
+- Pincode
+- Timestamp of the signature
+
+For more details about data parsing, see [Appendix B - Data Formats](#Appendix-B-Data-Formats)
+
+### 4. Nullifier Generation
+
+A nullifier is a core component of the protocol, designed to generate a unique identifier for the user without revealing sensitive identity attributes. The nullifier is constructed using the following formula:
+
+```
+Hash(Photo || NullifierSeed)
+```
+
+#### Photo
+
+The photo is used as it provides high entropy, reducing the risk of collision (e.g., two individuals generating the same nullifier). Using a photo also protects against dictionary attacks. For instance, a nullifier derived from simple attributes like name and birthdate could be easily recomputed, enabling tracking.
+
+#### Nullifier Seed
+
+The nullifier seed enables application- or action-specific nullifiers, ensuring that the same person generates distinct nullifiers across different applications or actions. This prevents cross-application linkage. The protocol recommends a nullifier seed of 16 bytes, allowing for \(2^{128}\) possible values.
+
+---
+
+## Preliminaries
+
+### Proof Generation Environment
+
+The protocol is built with the assumption that closed servers cannot be trusted. Consequently, proof generation must occur locally on the client’s device. Sensitive data is never shared with third parties during the proof generation process, preserving user privacy.
+
+### Nullifier Assumptions
+
+Nullifiers protect users from deanonymization by relying on the computational hardness of reversing a hash function. Only the issuer of the corresponding signature can feasibly link nullifiers, as they hold the original inputs. Additionally, since proof generation happens locally on the client, the nullifier seed is treated as public, maintaining privacy while ensuring robust linkage prevention.
+
+### Selective Disclosure
+
+The protocol does not allow arbitrary disclosure of identity attributes but instead ensures that only group-secure attributes are revealed. This approach guarantees that even when all disclosed attributes are revealed, they belong to a sufficiently large set to prevent deanonymization. The protocol is designed for identity verification on public, immutable networks, and it prevents any sensitive data from being published publicly.
 
 ## Protocol Flow
 
@@ -57,7 +107,7 @@ Implementations MUST provide:
 Implementations MUST:
 
 1. Extract the signed message and the signature from the QR code data
-2. Verify RSA signature
+2. Verify RSA-SHA256 signature
 3. Parse signed data fields
 4. Generate circuit inputs
 
@@ -80,6 +130,10 @@ Input requirements:
 ```
 
 ## Circuit Design
+
+The current circuit design is made to optimise its implementation using Circom Groth16, but note that the same logics could be applied and implemented in other proving schemes.
+
+For more details, see [appendix A - Circuit Architecture](#Appendix-A-Circuit-Architecture)
 
 ### Inputs
 
@@ -159,7 +213,7 @@ The circuit MUST perform the following operations in sequence:
 
 ### Component Interaction
 
-![image](https://hackmd.io/_uploads/Byb23aRfkx.png)
+![image](./anon-aadhaar-circuit.png)
 
 ### 2. Proof Generation
 
@@ -232,50 +286,67 @@ Error responses MUST include:
 
 The protocol assumes:
 
-1. Trusted setup for zero-knowledge system
-2. Secure and honest UIDAI RSA key, the trust assumption is that the UIDAI RSA private key will not sign non legitimate identities
-3. Secure random number generator
-4. Honest verifier
+1. The proven security of the used proving system, and the trusted setup of the circuit if required by the proving system being used
+2. Secure and honest UIDAI RSA key, the trusting the UIDAI RSA private key will not sign non legitimate identities
 
-Known limitations:
+## Known limitations:
 
-1. QR code format changes, if the UIDAI change the format of the Aadhaar Secure QR code, then the protocol must be updated to follow the new data serialization.
-2. Circuit size constraints, the current reference implementation in Circom have around 1 million constraints
-3. Nullifier rotation, the nullifier is based on the Aadhaar photo of the user, this photo can be changed following a process specified by the UIDAI. From the documentation, the photo can be changed within 7 days, meaning that a user could potentially generates 2 nullifiers using the same nullifier Seed. This must be took into consideration when building use cases that requires a nullifier lasting for more than 7 days.
+- Circuit Constraints Size
+- Aadhaar Secure QR Code Format and Nullifier Rotation
+
+**1. Circuit Size Constraints**
+
+The current reference implementation in Circom comprises approximately **1 million constraints**. The benchmarks for this implementation are as follows:
+
+- **Memory consumption at peak with bare metal Rapidsnark**: 1.4 GB
+- **Proving key size**: 600 MB (to be downloaded)
+
+**2. Considerations for Aadhaar Secure QR Code and Nullifier Rotation**
+
+- **QR Code Format Changes**: The protocol does not have control on the signature generation process. If the Unique Identification Authority of India (UIDAI) modifies the format of the Aadhaar Secure QR code, the protocol must be updated to accommodate the new data serialization format. The Secure QR code contains demographic information and the photograph of the Aadhaar holder, digitally signed by UIDAI to ensure security and integrity.
+
+- **Nullifier Rotation**: The nullifier is derived from the user's Aadhaar photo. UIDAI allows individuals to update their Aadhaar photograph by visiting an Aadhaar Enrolment Centre or Aadhaar Sewa Kendra. The process involves submitting a request and providing biometric details, with the update typically processed within 90 days. However, the actual time frame may vary, and users should consider the potential for generating multiple nullifiers within a short period if the photo is updated. This factor is crucial when developing use cases that require a nullifier to remain consistent for an extended duration.
 
 ## Privacy Guarantees
 
 The protocol MUST guarantee:
 
-1. Base identity privacy
-2. Nullifier unlinkability, from all the actors except the issuer of the signature
-3. Signal binding when requested
+1. That the user cannot be deanonymized, except from the issuer of the signature.
+2. That the unique identifier of the user (nullifier) cannot be used to track user's activity as soon as the nullifier seed changes accross applications.
+
+**Note**: While it cannot be enforced at the protocol level, the protocol strongly recommends that users SHOULD have access to a comprehensive UI that clearly displays what the prover is going to reveal when using selective disclosure and/or signal binding.
 
 # Implementation Notes
+
+The current [reference implementation](https://github.com/anon-aadhaar/anon-aadhaar) of the protocol is built with [Circom](https://docs.circom.io/) Groth16, and snarkjs.
 
 Basic proof generation:
 
 ```typescript
+// generateArgs is the component that will prepare the inputs for the circuit
+// https://github.com/anon-aadhaar/anon-aadhaar/blob/main/packages/core/src/generateArgs.ts
 const args = await generateArgs({
   qrData: QRData,
   certificateFile: certificate, // x509 PEM certificate of the signing public key
   nullifierSeed: number,
 });
 
+// Call to the snarkjs prove function
 const anonAadhaarProof = await prove(args);
 ```
 
 Basic verification:
 
 ```typescript
+// Call to the snarkjs verify function
 const verified = await verify(anonAadhaarProof);
 ```
 
 # References
 
-1. [UIDAI QR Code Specification](https://uidai.gov.in/images/resource/User_manulal_QR_Code_15032019.pdf)
-2. RSA PKCS#1 v2.1
-3. SHA-256 FIPS 180-4
+1. [UIDAI Aadhaar Secure QR Code Specification](https://uidai.gov.in/images/resource/User_manulal_QR_Code_15032019.pdf)
+2. [RSA PKCS#1 v2.1](https://www.rfc-editor.org/rfc/rfc2313)
+3. [SHA-256 FIPS 180-4](https://nvlpubs.nist.gov/nistpubs/fips/nist.fips.180-4.pdf)
 
 # Appendix A: Circuit Architecture
 
