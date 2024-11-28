@@ -161,7 +161,7 @@ For more details, see [appendix A - Circuit Architecture](#Appendix-A-Circuit-Ar
 
 The circuit MUST perform the following operations in sequence:
 
-1. Signature Verification
+1. **Signature Verification**
    a. **SHA-256 Hash**
 
    - Input: `qrDataPadded`, `qrDataPaddedLength`
@@ -215,55 +215,66 @@ The circuit MUST perform the following operations in sequence:
 
 ![image](./anon-aadhaar-circuit.png)
 
-### 2. Proof Generation
+### 1. Proof Generation
 
-The proof generation MUST:
+#### **Prover MUST**
 
-1. Verify QR data signature
-2. Extract required fields
-3. Generate nullifier
-4. Create zero-knowledge proof
+- Validate the QR data signature to ensure integrity.
+- Extract all required fields from the Aadhaar Secure QR code.
+- Generate a unique `nullifier` for the user, ensuring it is consistent and non-colliding.
+- Create a valid zero-knowledge proof (`proof`) to encapsulate the extracted data while preserving privacy.
+- Reveal the hash of the `pubKey` used to verify the RSA signature
 
-Circuit constraints:
+#### **Prover MAY**
 
-1. RSA signature validity
-2. Field bounds checking
+- The prover can optionnaly reveal any relevant selective disclosure field by setting the corresponding boolean parameter to true (`ageAbove18`, `gender`, `state`, `pincode`)
+- The prover can optionnaly bind the proof to a specific value `signalHash`, which acts as a signature of the signal alongside the prover contraints checks
 
-Note that the circuit is agnostic in terms of RSA public key, it check generate a valid proof as soon as the data format correspond to the Aadhaar Secure QR code, it's the role of the verifier to check the correctness of the used RSA public key, and check that the outputed hash of the public key, is corresponding to one official UIDAI public key.
+#### **Circuit Constraints**
 
-### 3. Verification
+- Enforce RSA signature validity against the QR data payload.
+- Perform field bounds checking to ensure all fields adhere to specified constraints of the secure Aadhaar QR code.
 
-Verifier MUST check:
+### Output Format
 
-1. Proof validity
-2. RSA public key validity
+The prover output should be structured as follows:
 
-Verifier SHOULD check:
-
-1. Nullifier uniqueness, by checking that the nullifier seed is the one corresponding to the action set.
-2. Timestamp bounds, it should be used as a timebased one time password (TOTP), ensuring the user has access to the UIDAI portal and can generate freshly signed data.
-
-Verifier OPTIONALLY check:
-
-1. Signal Hash, verify that the signal commited to is corresponding to the expected value. This mechanism is useful to prevent front running when sending a proof to an on-chain verifier, the user can commit to an EOA address from which the transaction will be send.
-2. Selective Disclosure, verify an attributes from the four revealed fields.
-
-Output format:
-
-```
+```json
 {
-  proof: Bytes,            // Zero-knowledge proof
-  pubKeyHash: Bytes32,     // RSA key commitment
-  timestamp: Uint64,       // UTC Unix timestamp
-  nullifierSeed: string    // Seed of the nullifier
-  nullifier: Bytes32,      // Unique identifier
-  signalHash: Bytes32,     // Optional binding
-  ageAbove18: Boolean       // Optional disclosures
-  gender: string           // Optional disclosures
-  pincode: string          // Optional disclosures
-  state: string            // Optional disclosures
+  "proof": "Bytes", // Zero-knowledge proof
+  "pubKeyHash": "Bytes32", // RSA public key commitment
+  "timestamp": "Uint64", // UTC Unix timestamp
+  "nullifierSeed": "string", // Seed for nullifier generation
+  "nullifier": "Bytes32", // Unique user identifier
+  "signalHash": "Bytes32", // Optional transaction binding
+  "ageAbove18": "Boolean", // Optional: Age verification
+  "gender": "string", // Optional: Gender disclosure
+  "pincode": "string", // Optional: Postal code
+  "state": "string" // Optional: State of residence
 }
 ```
+
+### 2. Proof Verification
+
+#### **Verifier MUST**
+
+- Validate the zero-knowledge proof (`proof`) provided by the user.
+- Verify the RSA public key by ensuring the `pubKeyHash` corresponds to an official UIDAI public key.
+- Confirm the `nullifierSeed` matches the action set's initialization parameters.
+
+#### **Verifier SHOULD**
+
+- Validate the `nullifier` as a unique identifier for the user to prevent duplicate or unauthorized interactions.
+- Ensure the `timestamp` is within acceptable bounds, functioning as a Time-Based One-Time Password (TOTP) to confirm access to the UIDAI portal and fresh data generation.
+
+#### **Verifier MAY**
+
+- Verify the `signalHash` to bind the proof to an expected value, which helps prevent front-running by committing to an externally owned account (EOA) address.
+- Validate selectively disclosed attributes, such as:
+  - `ageAbove18`: Confirm the user is over 18.
+  - `gender`: Verify the disclosed gender.
+  - `pincode`: Check the disclosed postal code.
+  - `state`: Validate the disclosed state of residence.
 
 ## Error Handling
 
