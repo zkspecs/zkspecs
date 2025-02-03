@@ -237,7 +237,7 @@ The act of sharing the signal (e.g. a message or vote).
 
 ### EVM-Compatible Chains
 
-EVM-compatible chains are Blockchain networks that support the Ethereum Virtual Machine (EVM), allowing them to run Ethereum-based smart contracts and decentralized applications (dApps) without modification. These chains maintain compatibility with Ethereum’s tooling, such as wallets, development frameworks, and infrastructure, enabling seamless deployment and interoperability across ecosystems.
+EVM-compatible chains are blockchain networks that support the Ethereum Virtual Machine (EVM), allowing them to run Ethereum-based smart contracts and decentralized applications (dApps) without modification. These chains maintain compatibility with Ethereum’s tooling, such as wallets, development frameworks, and infrastructure, enabling seamless deployment and interoperability across ecosystems.
 
 ## Copyright
 
