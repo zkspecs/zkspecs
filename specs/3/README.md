@@ -74,7 +74,7 @@ The implementation section will refer to [Semaphore v4](https://github.com/semap
 
 Semaphore is implemented using [Circom](https://github.com/iden3/circom) + [Snarkjs](https://github.com/iden3/snarkjs) + [Groth16](https://eprint.iacr.org/2016/260.pdf).
 
-- **Circom**: Used to write the circuit.
+- **Circom**: Used to write the circuit and generate its [R1CS constraint system](https://docs.circom.io/background/background/#_1).
 - **Snarkjs**: Used to generate zk-artifacts and generate and verify the zero-knowledge proofs.
 - **Groth16**: Used as a proving system.
 
