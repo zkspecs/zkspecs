@@ -187,7 +187,7 @@ To know more about the proof verification in TypeScript/JavaScript see [the code
 
 #### On-chain
 
-Snarkjs is used to generate a Solidity verifier per tree depth. Then all the verifiers are mixed into only one. To know more about the verifier see the [Semaphore Verifier](https://github.com/semaphore-protocol/semaphore/blob/main/packages/contracts/contracts/base/SemaphoreVerifier.sol).
+Snarkjs is used to generate a Solidity verifier per tree depth. Then, all verifiers are merged into a single one. To know more about the verifier see the [Semaphore Verifier](https://github.com/semaphore-protocol/semaphore/blob/main/packages/contracts/contracts/base/SemaphoreVerifier.sol).
 
 ```solidity
 return
