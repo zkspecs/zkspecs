@@ -70,7 +70,7 @@ Semaphore Flow:
 
 ## Implementation
 
-The implementation section will refer to Semaphore v4 implemented by [PSE](https://pse.dev/).
+The implementation section will refer to [Semaphore v4](https://github.com/semaphore-protocol/semaphore/releases/tag/v4.0.0) implemented by [PSE](https://pse.dev/).
 
 Semaphore is implemented using [Circom](https://github.com/iden3/circom) + [Snarkjs](https://github.com/iden3/snarkjs) + [Groth16](https://eprint.iacr.org/2016/260.pdf).
 
