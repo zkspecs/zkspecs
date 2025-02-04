@@ -75,7 +75,7 @@ The implementation section will refer to [Semaphore v4](https://github.com/semap
 Semaphore is implemented using [Circom](https://github.com/iden3/circom) + [Snarkjs](https://github.com/iden3/snarkjs) + [Groth16](https://eprint.iacr.org/2016/260.pdf).
 
 - **Circom**: Used to write the circuit and generate its [R1CS constraint system](https://docs.circom.io/background/background/#_1).
-- **Snarkjs**: Used to generate zk-artifacts and generate and verify the zero-knowledge proofs.
+- **Snarkjs**: Used to generate [zk-artifacts](#zk-artifacts) and generate and verify the zero-knowledge proofs.
 - **Groth16**: Used as a proving system.
 
 ### Semaphore Identity
@@ -234,6 +234,26 @@ The term "signals" in Semaphore refers to the values the user shares when voting
 ### Signaling
 
 The act of sharing the signal (e.g. a message or vote).
+
+### zk-Artifacts
+
+zk-artifacts are the collection of files generated during:
+
+- **Circuit compilation** in Circom (e.g., `.r1cs`, `.wasm` for circuit definition).
+- **Proving system setup** (e.g., Groth16), including trusted setup ceremony files such as:
+  - Proving and verification keys (`.zkey`)
+  - The verification key in JSON format.
+
+In this document, **zk-artifacts** specifically refer to:
+
+- `.wasm`
+- `.zkey`
+- The verification key file in JSON format.
+
+These zk-artifacts are used for:
+
+- **Generating** zero-knowledge proofs (`.wasm`, `.zkey`).
+- **Verifying** zero-knowledge proofs (verification key in JSON format).
 
 ### EVM-Compatible Chains
 
