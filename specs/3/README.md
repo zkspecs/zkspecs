@@ -145,7 +145,7 @@ return {
 }
 ```
 
-To know more about the proof generation see [the code](https://github.com/semaphore-protocol/semaphore/blob/main/packages/proof/src/generate-proof.ts).
+To learn more about the proof generation, see the [proof generation code](https://github.com/semaphore-protocol/semaphore/blob/main/packages/proof/src/generate-proof.ts).
 
 #### Semaphore Proof Example
 
