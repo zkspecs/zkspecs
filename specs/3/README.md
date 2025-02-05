@@ -90,7 +90,7 @@ The Identity Commitment is the public Semaphore identity value used in Semaphore
 
 A [Semaphore group](https://github.com/semaphore-protocol/semaphore/tree/main/packages/group) is a Merkle tree in which each leaf is an identity commitment for a user.
 
-Semaphore uses the [LeanIMT](#LeanIMT) implementation, which is an optimized binary incremental Merkle tree. The tree nodes are calculated using Poseidon. To learn more about it you can read the [LeanIMT paper](https://github.com/privacy-scaling-explorations/zk-kit/tree/main/papers/leanimt).
+Semaphore uses the **LeanIMT** implementation, which is an optimized binary incremental Merkle tree. The tree nodes are calculated using Poseidon. To learn more about it you can read the [LeanIMT paper](https://github.com/privacy-scaling-explorations/zk-kit/tree/main/papers/leanimt).
 
 ### Circuit
 
@@ -212,6 +212,12 @@ return
 - **Scalability**: As the number of members grows, generating a client-side Merkle proof is no longer feasible. It’s necessary to have a server to do it. This not only is time and data consuming, but could also allow the server to deanonymize the proofs.
 - **On-chain costs**: As the tree grows on-chain, the gas cost of insertions also increases.
 - **zk-artifacts**: People need to download [zk-artifacts](#zk-artifacts) to generate the zk proof and these have a couple of megabytes which can be an issue with very slow internet connection.
+
+#### Benchmarks
+
+Benchmarks for the LeanIMT can be found in the [LeanIMT paper](https://github.com/privacy-scaling-explorations/zk-kit/tree/main/papers/leanimt).
+
+Benchmarks for Semaphore are available in the [Semaphore documentation](https://docs.semaphore.pse.dev/benchmarks).
 
 ## Privacy Guarantees
 
