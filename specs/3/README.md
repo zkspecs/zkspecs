@@ -209,7 +209,7 @@ return
 
 - **Scalability**: As the number of members grows, generating a client-side Merkle proof is no longer feasible. It’s necessary to have a server to do it. This not only is time and data consuming, but could also allow the server to deanonymize the proofs.
 - **On-chain costs**: As the tree grows on-chain, the gas cost of insertions also increases.
-- **zk artifacts**: People need to download zk artifacts to generate the zk proof and these have a couple of megabytes which can be an issue with very slow internet connection.
+- **zk-artifacts**: People need to download [zk-artifacts](#zk-artifacts) to generate the zk proof and these have a couple of megabytes which can be an issue with very slow internet connection.
 
 ## Privacy Guarantees
 
