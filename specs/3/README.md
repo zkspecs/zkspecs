@@ -24,11 +24,11 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 Semaphore is a [zero-knowledge](https://en.wikipedia.org/wiki/Zero-knowledge_proof) (zk) protocol that allows users to prove their membership in a group and send messages such as votes or feedback without revealing their identity.
 
-It also provides a simple mechanism to prevent double-signaling, which means that the same proof cannot be verified twice.
+It also provides a simple mechanism to prevent [double-signaling](#signaling), which means that the same proof cannot be verified twice.
 
 ## Motivation
 
-Privacy remains a significant challenge, with existing solutions often being limited, hard to extend, and overly complex. These limitations make it difficult to create privacy-preserving applications and prevent users from securely interacting without exposing their identities. Semaphore addresses these issues by enabling anonymous [signaling](#Signals), solving the critical need for privacy while maintaining transparency.
+Privacy remains a significant challenge, with existing solutions often being limited, hard to extend, and overly complex. These limitations make it difficult to create privacy-preserving applications and prevent users from securely interacting without exposing their identities. Semaphore addresses these issues by enabling the sharing of anonymous [messages](#message), solving the critical need for privacy while maintaining transparency.
 
 ## System Components
 
@@ -227,13 +227,13 @@ The protocol MUST guarantee:
 
 ## Glossary
 
-### Signals
+### Message
 
-The term "signals" in Semaphore refers to the values the user shares when voting, confirming, sending a message, etc.
+In Semaphore, the term message (also known as _signal_) refers to the value a user shares when performing actions such as voting, confirming, sending a text message, and more.
 
 ### Signaling
 
-The act of sharing the signal (e.g. a message or vote).
+The act of sharing a message (e.g., a text message or vote).
 
 ### zk-Artifacts
 
