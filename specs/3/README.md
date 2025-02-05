@@ -113,6 +113,8 @@ Semaphore uses the [LeanIMT](#LeanIMT) implementation, which is an optimized bin
 - `merkleRoot`: Merkle Root of the LeanIMT.
 - `nullifier`: A value designed to be a unique identifier for the zk proof. It is used to prevent the same zk proof from being used twice. In Semaphore, the nullifier is the hash of the scope and secret value of the user's Semaphore identity.
 
+When using the same scope for an identity, the resulting nullifier remains the same because the same hash is generated. To obtain different nullifiers for the same identity (allowing users to share multiple zk proofs) users must use a different scope each time.
+
 The hash function used in the circuit is Poseidon because it is a zk-friendly hash function.
 
 ### Proof Generation
