@@ -185,7 +185,7 @@ return groth16.verify(
 )
 ```
 
-To know more about the proof verification in TypeScript/JavaScript see [the code](https://github.com/semaphore-protocol/semaphore/blob/main/packages/proof/src/verify-proof.ts).
+To learn more about the proof verification in TypeScript/JavaScript, see [the proof verification code](https://github.com/semaphore-protocol/semaphore/blob/main/packages/proof/src/verify-proof.ts).
 
 #### On-chain
 
