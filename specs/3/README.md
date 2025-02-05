@@ -171,7 +171,7 @@ To know more about the proof generation see [the code](https://github.com/semaph
 
 ### Proof Verification
 
-Proof verification works off-chain and on-chain (on [EVM-compatible chains](#EVM-Compatible-Chains)).
+Proof verification works both off-chain and on-chain (on [EVM-compatible chains](#evm-compatible-chains) where the Groth16 Semaphore verifier can be deployed).
 
 #### Off-chain
 
