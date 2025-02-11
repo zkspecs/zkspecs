@@ -1,15 +1,22 @@
 # Semaphore Specification
 
 ---
-
-title: Semaphore
+slug: 3
+title: 3/Semaphore
 name: Semaphore Protocol
 status: draft
 category: Standards Track
 tags: zero-knowledge, identity, privacy, anonymity, proof of membership, groups
 editor: Vivian Plasencia <vivianpc@pse.dev>
-contributors: Andy <andy@pse.dev>, Cedoor <cedoor@pse.dev>, Oskar Thoren <oskarth@titanproxy.com>
-
+contributors: 
+- Andy <andy@pse.dev>
+- Cedoor <cedoor@pse.dev>
+- Oskar Thoren <oskarth@titanproxy.com>
+- tags:
+  - zero-knowledge
+  - identity
+  - groups
+  - privacy
 ---
 
 ## Change Process
