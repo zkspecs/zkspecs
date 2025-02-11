@@ -1,6 +1,7 @@
 # Semaphore Specification
 
 ---
+
 slug: 3
 title: 3/Semaphore
 name: Semaphore Protocol
@@ -8,7 +9,8 @@ status: draft
 category: Standards Track
 tags: zero-knowledge, identity, privacy, anonymity, proof of membership, groups
 editor: Vivian Plasencia <vivianpc@pse.dev>
-contributors: 
+contributors:
+
 - Andy <andy@pse.dev>
 - Cedoor <cedoor@pse.dev>
 - Oskar Thoren <oskarth@titanproxy.com>
@@ -17,6 +19,7 @@ contributors:
   - identity
   - groups
   - privacy
+
 ---
 
 ## Change Process
@@ -35,7 +38,7 @@ It also provides a simple mechanism to prevent [double-signaling](#signaling), w
 
 ## Motivation
 
-Privacy remains a significant challenge, with existing solutions often being limited, hard to extend, and overly complex. These limitations make it difficult to create privacy-preserving applications and prevent users from securely interacting without exposing their identities. Semaphore addresses these issues by enabling the sharing of anonymous [messages](#message), solving the critical need for privacy while maintaining transparency.
+Privacy remains a significant challenge in the digital world, with existing solutions often being limited, hard to extend, and overly complex. These limitations make it difficult to create privacy-preserving applications and prevent users from securely interacting without exposing their identities. Semaphore addresses these issues by enabling the sharing of anonymous [messages](#message), solving the critical need for privacy while maintaining transparency.
 
 ## System Components
 
