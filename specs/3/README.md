@@ -1,5 +1,3 @@
-# Semaphore Specification
-
 ---
 
 slug: 3
@@ -21,6 +19,8 @@ contributors:
   - privacy
 
 ---
+
+# Semaphore Specification
 
 ## Change Process
 
