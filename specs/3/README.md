@@ -82,7 +82,7 @@ Semaphore Flow:
 
 The implementation section will refer to [Semaphore v4](https://github.com/semaphore-protocol/semaphore/releases/tag/v4.0.0) implemented by [PSE](https://pse.dev/).
 
-Semaphore is implemented using [Circom](https://github.com/iden3/circom) + [Snarkjs](https://github.com/iden3/snarkjs) + [Groth16](https://eprint.iacr.org/2016/260.pdf).
+Semaphore's zk functionality is implemented using [Circom](https://github.com/iden3/circom) + [Snarkjs](https://github.com/iden3/snarkjs) + [Groth16](https://eprint.iacr.org/2016/260.pdf).
 
 - **Circom**: Used to write the circuit and generate its [R1CS constraint system](https://docs.circom.io/background/background/#_1).
 - **Snarkjs**: Used to generate [zk-artifacts](#zk-artifacts) as well as to create and verify zk-SNARK proofs.
