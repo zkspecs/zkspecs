@@ -5,7 +5,7 @@ title: CS-03/EXCUBIAE-V0.3.0
 name: ABAC Smart Contract Framework
 status: draft
 category: Standards Track
-editor: Giacomo Corrias <0xjei@pse.dev>
+editor: Giacomo Corrias (0xjei) <0xjei@pse.dev>
 contributors: 
 
 - ...
@@ -280,3 +280,333 @@ Factory contracts enable efficient deployment of Policies and Checkers. Each Fac
    - MUST be a minimal proxy contract with appended initialization data using the reference proxy library (e.g., [Solady's LibClone](https://github.com/Vectorized/solady/blob/main/src/utils/LibClone.sol))
    - MUST emit a `CloneDeployed(address)` event upon successful deployment.
 
+## Security Considerations
+
+Implementations MUST address:
+
+### Prevention of Double-Enforcement Attacks
+
+Double-enforcement attacks occur when a subject attempts to leverage the same validation evidence multiple times or across different contexts. To prevent these attacks:
+- Track unique identifiers for evidence or validation attempts
+   - SHOULD implement mappings that mark evidence as "spent" after first use
+   - SHOULD consider mechanisms for cross-policy "nullifier" sharing when appropriate
+   - CAN implement time-based expiration for enforcement status when appropriate
+   - CAN provide mechanisms for authorized revocation of enforcement
+- For advanced use cases, you can implement more complex mappings and / or commitment schemes that prevent evidence reuse.
+   - MUST track separate state for each validation phase.
+
+### Secure Proxy Initialization
+
+The minimal proxy pattern with immutable args introduces specific security considerations:
+- Ensure initialization is performed in the same transaction as deployment
+   - MUST implement secure ownership transfer during initialization
+- Prevent front-running attacks during deployment 
+- Verify that critical parameters cannot be modified after initialization
+   - Restrict deployment capabilities to authorized addresses
+
+### Clear Separation Between Validation and State Management
+
+Maintaining separation of concerns is critical for security:
+- Ensure Checkers remain purely stateless for validation
+- Avoid side effects or state changes in Checker contracts
+- Implement view functions for all validation logic
+- Restrict all state changes to Policy contracts
+- Clearly document state transitions and invariants
+- Implement checks-effects-interactions pattern in Policy operations
+
+### Additional Considerations
+
+Implementations SHOULD also consider:
+
+1. **Gas Optimization**
+   - Balance security with gas efficiency
+   - Analyze gas costs for various validation scenarios
+   - Document gas expectations for implementers
+
+2. **Upgradeability Patterns**
+   - If implementing upgradeability, document security implications
+   - Consider using transparent proxy patterns when appropriate
+   - Implement secure upgrade mechanisms with appropriate timeouts
+
+3. **Composability Risks**
+   - Analyze potential for unexpected interactions with other protocols
+   - Document assumptions about external contracts
+   - Consider fail-safe mechanisms for integration failures
+
+# Implementation Notes
+
+Excubiae is structured as a [TypeScript/Solidity monorepo](https://github.com/privacy-scaling-explorations/excubiae) using [Yarn](https://yarnpkg.com/getting-started) as its package manager. The project is organized into distinct packages and applications:
+
+```
+excubiae/
+├── packages/
+│   ├── contracts/     # Framework implementation
+```
+
+The contracts package uniquely combines [Hardhat](https://hardhat.org/) and [Foundry](https://book.getfoundry.sh/) in a way that they can [coexist together](https://hardhat.org/hardhat-runner/docs/advanced/hardhat-and-foundry), offering developers flexibility in their testing approach. This dual-environment setup enables both JavaScript/TypeScript and Solidity-native testing patterns while maintaining complete coverage.
+
+The framework's core implementation resides in `packages/contracts`, structured into distinct layers:
+- Core contracts implementing base and advanced validation patterns, minimal proxy pattern with immutable args using [Solady's LibCLone](https://github.com/Vectorized/solady/blob/main/src/utils/LibClone.sol).
+- Interface definitions ensuring consistent implementation.
+- Test suites demonstrating usage & integration (voting use case for base and advanced scenarios).
+- Semaphore extensions which enforces a proof of membership for a Semaphore group with resistance to frontrunning attack vectors.
+
+## Guidelines
+The following guidelines MUST be seen as a reference implementation example / guidelines and are based on the [reference implementation codebase](https://github.com/privacy-scaling-explorations/excubiae)
+
+### Writing a Clonable Checker / Policy
+
+When implementing a policy, the first step is defining the criteria for passing validation. These criteria must be verifiable on-chain—such as token ownership, balance thresholds, or protocol-specific credentials.
+
+For example, in a voting system where voters must own a specific NFT to participate, the validation logic resides in a **Checker** contract, while a **Policy** enforces the validation result.
+
+A checker encapsulates validation logic. The [BaseERC721Checker](https://github.com/privacy-scaling-explorations/excubiae/blob/main/packages/contracts/contracts/test/examples/base/BaseERC721Checker.sol) is a clonable contract that verifies NFT ownership. To implement a clonable checker:
+
+- Override `_initialize()`, which is executed only once at deployment time to store immutable arguments in the contract state.
+- Implement `_check()`, defining the validation logic.
+
+Once the checker is in place, a **Policy** references it to enforce validation. The [BaseERC721Policy](https://github.com/privacy-scaling-explorations/excubiae/blob/main/packages/contracts/contracts/test/examples/base/BaseERC721Policy.sol) demonstrates how to:
+
+- Extend a base policy contract.
+- Provide a unique trait identifier.
+
+```solidity
+abstract contract Clone is IClone {
+    bool public initialized;
+
+    function initialize() external {
+        _initialize();
+    }
+
+    function getAppendedBytes() external returns (bytes memory appendedBytes) {
+        return _getAppendedBytes();
+    }
+
+    function _initialize() internal virtual {
+        if (initialized) revert AlreadyInitialized();
+        initialized = true;
+    }
+
+    function _getAppendedBytes() internal virtual returns (bytes memory appendedBytes) {
+        return LibClone.argsOnClone(address(this));
+    }
+}
+
+abstract contract Policy is Clone, IPolicy, Ownable(msg.sender) {
+    address public target;
+
+    modifier onlyTarget() {
+        if (msg.sender != target) revert TargetOnly();
+        _;
+    }
+
+    function _initialize() internal virtual override {
+        super._initialize();
+
+        // Sets the factory as the initial owner.
+        _transferOwnership(msg.sender);
+    }
+
+    function setTarget(address _target) external virtual onlyOwner {
+        if (_target == address(0)) revert ZeroAddress();
+        if (target != address(0)) revert TargetAlreadySet();
+
+        target = _target;
+        emit TargetSet(_target);
+    }
+}
+
+abstract contract BaseChecker is Clone, IBaseChecker {
+    function check(address subject, bytes calldata evidence) external view override returns (bool checked) {
+        return _check(subject, evidence);
+    }
+
+    function _check(address subject, bytes calldata evidence) internal view virtual returns (bool checked) {}
+}
+
+abstract contract BasePolicy is Policy, IBasePolicy {
+    BaseChecker public BASE_CHECKER;
+
+    function _initialize() internal virtual override {
+        super._initialize();
+
+        bytes memory data = _getAppendedBytes();
+        (address sender, address baseCheckerAddr) = abi.decode(data, (address, address));
+
+        _transferOwnership(sender);
+
+        BASE_CHECKER = BaseChecker(baseCheckerAddr);
+    }
+
+    function enforce(address subject, bytes calldata evidence) external override onlyTarget {
+        _enforce(subject, evidence);
+    }
+
+    function _enforce(address subject, bytes calldata evidence) internal virtual {
+        if (!BASE_CHECKER.check(subject, evidence)) revert UnsuccessfulCheck();
+
+        emit Enforced(subject, target, evidence);
+    }
+}
+
+contract BaseERC721Checker is BaseChecker {
+    IERC721 public nft;
+
+    function _initialize() internal override {
+        super._initialize();
+
+        bytes memory data = _getAppendedBytes();
+
+        address nftAddress = abi.decode(data, (address));
+
+        nft = IERC721(nftAddress);
+    }
+
+    function _check(address subject, bytes calldata evidence) internal view override returns (bool) {
+        super._check(subject, evidence);
+
+        uint256 tokenId = abi.decode(evidence, (uint256));
+
+        return nft.ownerOf(tokenId) == subject;
+    }
+}
+
+contract BaseERC721Policy is BasePolicy {
+    function trait() external pure returns (string memory) {
+        return "BaseERC721";
+    }
+}
+```
+
+To deploy clones dynamically, each Checker and Policy implementation requires a corresponding **Factory** contract. Examples include [BaseERC721CheckerFactory](https://github.com/privacy-scaling-explorations/excubiae/blob/main/packages/contracts/contracts/test/examples/base/BaseERC721CheckerFactory.sol) and [BaseERC721PolicyFactory](https://github.com/privacy-scaling-explorations/excubiae/blob/main/packages/contracts/contracts/test/examples/base/BaseERC721PolicyFactory.sol).
+
+Each factory must:
+1. Specify the implementation contract in the constructor and pass a new instance to the `Factory()` constructor.
+2. Implement a `deploy()` method that:
+   - Encodes initialization parameters (**immutable args**).
+   - Calls `_deploy(data)`, deploying a clone.
+   - Initializes the clone via its `initialize()` method.
+
+```solidity
+abstract contract Factory is IFactory {
+    address public immutable IMPLEMENTATION;
+
+    constructor(address _implementation) {
+        IMPLEMENTATION = _implementation;
+    }
+
+    function _deploy(bytes memory data) internal returns (address clone) {
+        clone = LibClone.clone(IMPLEMENTATION, data);
+
+        emit CloneDeployed(clone);
+    }
+}
+
+contract BaseERC721CheckerFactory is Factory {
+    constructor() Factory(address(new BaseERC721Checker())) {}
+
+    function deploy(address _nftAddress) public {
+        bytes memory data = abi.encode(_nftAddress);
+
+        address clone = super._deploy(data);
+
+        BaseERC721Checker(clone).initialize();
+   }
+}
+
+contract BaseERC721PolicyFactory is Factory {
+    constructor() Factory(address(new BaseERC721Policy())) {}
+
+    function deploy(address _checkerAddr) public {
+        bytes memory data = abi.encode(msg.sender, _checkerAddr);
+
+        address clone = super._deploy(data);
+
+        BaseERC721Policy(clone).initialize();
+    }
+}
+```
+
+This approach enables efficient deployments and customization at deploy time. For example, different `_nftAddress` values can be set per clone, allowing multiple NFT collections to use the same validation logic while remaining independent.
+
+### Integrating a Policy
+
+The [BaseVoting](https://github.com/privacy-scaling-explorations/excubiae/blob/main/packages/contracts/contracts/test/examples/base/BaseVoting.sol) contract demonstrates a complete implementation of policy integration. It shows how to:
+- Initialize the policy
+- Enforce checks before actions
+- Track validation state
+
+```solidity
+contract BaseVoting {
+    event Registered(address voter);
+    event Voted(address voter, uint8 option);
+
+    error NotRegistered();
+    error AlreadyVoted();
+    error InvalidOption();
+
+    BaseERC721Policy public immutable POLICY;
+    mapping(address => bool) public registered;
+    mapping(address => bool) public hasVoted;
+
+    constructor(BaseERC721Policy _policy) {
+        POLICY = _policy;
+    }
+
+    function register(uint256 tokenId) external {
+        POLICY.enforce(msg.sender, abi.encode(tokenId));
+
+        registered[msg.sender] = true;
+
+        emit Registered(msg.sender);
+    }
+
+    function vote(uint8 option) external {
+        // Check registration and voting status.
+        if (!registered[msg.sender]) revert NotRegistered();
+        if (hasVoted[msg.sender]) revert AlreadyVoted();
+        if (option >= 2) revert InvalidOption();
+
+        // Record the vote.
+        hasVoted[msg.sender] = true;
+
+        emit Voted(msg.sender, option);
+    }
+}
+```
+
+#### Tracking Mechanisms to Prevent Double Enforcement
+
+Each Policy in Excubiae must implement its own tracking mechanism to prevent double enforcement. This ensures that the same proof or validation cannot be reused maliciously. The design of the tracking system may vary depending on the specific requirements of the policy.
+
+Example from [SemaphorePolicy](https://github.com/privacy-scaling-explorations/excubiae/blob/70967948b4025c3f7bbbf833c06cf5944187837d/packages/contracts/contracts/extensions/SemaphorePolicy.sol#L34):
+
+```solidity
+contract SemaphorePolicy is BasePolicy {
+    mapping(uint256 => bool) public spentNullifiers;
+
+    error AlreadySpentNullifier();
+
+    function trait() external pure returns (string memory) {
+        return "Semaphore";
+    }
+
+    function _enforce(address subject, bytes calldata evidence) internal override {
+        ISemaphore.SemaphoreProof memory proof = abi.decode(evidence, (ISemaphore.SemaphoreProof));
+        uint256 _nullifier = proof.nullifier;
+
+        if (spentNullifiers[_nullifier]) revert AlreadySpentNullifier();
+
+        spentNullifiers[_nullifier] = true;
+
+        super._enforce(subject, evidence);
+    }
+}```
+
+This pattern ensures that each proof is only used once, maintaining the integrity of the access control system.
+
+---
+
+# Copyright
+
+Copyright and related rights waived via [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
