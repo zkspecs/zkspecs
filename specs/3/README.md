@@ -40,84 +40,6 @@ In the evolving blockchain ecosystem, protocols continuously generate new forms 
 
 The implementations MUST provide:
 
-### Framework
-
-
-#### 1. Policy
-Policies define and enforce access rules based on evidence provided by subjects. Base implementations MUST:
-- Define a clear target address representing the protected resource.
-- Track enforcement state for subjects.
-- Delegate validation to a designated Checker.
-- Emit events on successful enforcement.
-- Prevent unauthorized access through well-defined error conditions.
-
-#### 2. Checker
-Checkers validate evidence against predefined rules. Base implementations MUST:
-
-- Provide a stateless validation mechanism through the `check()` method.
-- Support encoded evidence via `bytes` parameters.
-- Return `boolean` validation results.
-- Be reusable across multiple policies.
-
-#### 3. Factory
-Factory contracts enable efficient deployment of Policies and Checkers. Implementations MUST:
-
-- Support the [minimal proxy pattern with immutable args](https://github.com/Vectorized/solady/blob/main/src/utils/LibClone.sol).
-- Ensure proper initialization of cloned contracts.
-- Enable customizable deployment parameters.
-
-#### 4. Advanced Multi-Phase Validation
-Advanced implementations SHOULD support multi-phase validation for evidence check and enforcement:
-
-- **PRE**: Initial validation before main enforcement.
-- **MAIN**: Core validation (as for base implementation).
-- **POST**: Final validation after main enforcement.
-
-
-
-
----
-
-slug: CS-03
-title: CS-03/EXCUBIAE-V0.3.0
-name: ABAC Smart Contract Framework
-status: draft
-category: Standards Track
-editor: Giacomo Corrias (0xjei) <0xjei@pse.dev>
-contributors: 
-
-- ...
-- tags:
-   - smart contract
-   - gatekeeper
-   - framework
-   - composable
-   - policy
-   - checker
-
----
-
-# Change Process
-
-This document is governed by the [1/COSS](../1) (COSS).
-
-# Language
-
-The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
-
-# Abstract
-Excubiae is a composable framework for implementing custom, attribute-based access control policies on EVM-compatible networks. At its core, it separates the concerns of **policy** definition (*what rules to enforce*) from policy **checking** (*how to validate those rules*), enabling flexible and reusable access control patterns. The framework's mission is to enable policy enforcement through three key components: **Policies** that define access rules, **Checkers** that validate evidence, and *enforcement* mechanisms that manage the validation flow. Built on values of modularity, reusability, and security, Excubiae provides protocol developers with building blocks to create robust attribute-based access control (ABAC) systems. In fact, the name "[Excubiae](https://www.nihilscio.it/Manuali/Lingua%20latina/Verbi/Coniugazione_latino.aspx?verbo=excubia&lang=IT_#:~:text=1&text=excubia%20%3D%20sentinella...%20guardia,%2C%20excubia%20%2D%20Sostantivo%201%20decl.)" comes from the ancient Roman guards who kept watch and enforced access control - an apt metaphor for a system designed to protect smart contract access through configurable policies.
-
-# Motivation
-
-In the evolving blockchain ecosystem, protocols continuously generate new forms of **verifiable evidence** and **proofs** (either backed by cryptography or not). Current access control mechanisms in smart contracts are often rigid, tightly coupled, and lack interoperability, making them unsuitable for interconnection and communication. While these protocols excel at producing such evidence, integrating them into access control systems outside their standard ways of doing it (e.g., APIs / apps / libs / modules) remains challenging. Excubiae aims to bridge this gap by providing a universal framework for composing and enforcing access control policies upon verifiable attributes satisfaction (criterias), expanding and making interoperable forms of on-chain evidence, serving as a foundational layer for ABAC across the ecosystem. In fact, the framework serves multiple audiences: protocol developers integrating access control into their systems, as smart contract engineers implementing custom validation logic for access control on-chain.
-
-# Specification
-
-## System Requirements
-
-The implementations MUST provide:
-
 ### Smart Contracts
 
 #### 1. Checker
@@ -403,7 +325,6 @@ abstract contract Policy is Clone, IPolicy, Ownable(msg.sender) {
     function _initialize() internal virtual override {
         super._initialize();
 
-        // Sets the factory as the initial owner.
         _transferOwnership(msg.sender);
     }
 
