@@ -522,7 +522,8 @@ contract SemaphorePolicy is BasePolicy {
 
         super._enforce(subject, evidence);
     }
-}```
+}
+```
 
 This pattern ensures that each proof is only used once, maintaining the integrity of the access control system.
 
