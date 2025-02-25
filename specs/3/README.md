@@ -330,19 +330,25 @@ Maintaining separation of concerns is critical for security:
 Implementations SHOULD also consider:
 
 1. **Gas Optimization**
-   - Balance security with gas efficiency
-   - Analyze gas costs for various validation scenarios
-   - Document gas expectations for implementers
+Efficient gas usage is a key consideration when implementing policies and checkers. Implementers SHOULD:
+
+- Balance security with gas efficiency by minimizing redundant on-chain computations.
+- Analyze gas costs for various validation scenarios to ensure feasibility for real-world use cases.
+- Document gas expectations for implementers to provide clarity on cost implications.
 
 2. **Upgradeability Patterns**
-   - If implementing upgradeability, document security implications
-   - Consider using transparent proxy patterns when appropriate
-   - Implement secure upgrade mechanisms with appropriate timeouts
+Policies MAY be upgradeable by utilizing proxy patterns (e.g., [EIP-2535 Diamond Standard](https://eips.ethereum.org/EIPS/eip-2535)) or by allowing governance mechanisms to deploy updated versions. 
+
+- If implementing upgradeability, document security implications to avoid unforeseen risks.
+- Consider using transparent proxy patterns where applicable, ensuring compatibility with governance structures.
+- Implement secure upgrade mechanisms with appropriate time delays to allow for security reviews before changes take effect.
 
 3. **Composability Risks**
-   - Analyze potential for unexpected interactions with other protocols
-   - Document assumptions about external contracts
-   - Consider fail-safe mechanisms for integration failures
+Since Excubiae is designed to integrate with multiple protocols, developers SHOULD carefully consider:
+
+- Potential for unexpected interactions with other protocols that may lead to security vulnerabilities.
+- Assumptions about external contracts, ensuring predictable behavior when integrating with third-party protocols.
+- Implementing fail-safe mechanisms for integration failures, such as timeouts or fallback execution paths.
 
 # Implementation Notes
 
