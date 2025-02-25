@@ -95,6 +95,95 @@ The verifiable data / proof must be provided as encoded `bytes` to ensure flexib
 - Forward compatibility with new validation schemes
 - Custom interpretation by specialized Checkers
 
+### Evidence Structure
+
+Excubiae supports a flexible evidence format that enables diverse verification methods. Evidence refers to cryptographic proofs, attestations, or data that a subject provides to gain access to a protected resource. All evidence is encoded as `bytes` for future compatibility, composability, and protocol-agnostic validation. Evidence MAY take the following forms:
+
+#### 1. Basic Encoded Evidence
+Simple proofs such as token ownership or balance-based access.
+
+```solidity
+abi.encodePacked(tokenAddress, tokenId)
+```
+Example:
+```solidity
+bytes memory evidence = abi.encodePacked(0x1234..., 42);
+```
+
+#### 2. Hashed Commitments
+Evidence can be **hashed off-chain** and submitted on-chain to preserve privacy and reduce gas costs.
+
+```solidity
+keccak256(abi.encodePacked(secretValue, salt))
+```
+Example:
+```solidity
+bytes32 evidenceHash = keccak256(abi.encodePacked(0xdeadbeef, 0xabc123));
+```
+
+#### 3. Zero-Knowledge Proofs (ZKPs)
+For privacy-preserving authentication, Excubiae supports on-chain verifiable proofs (e.g., ZK-SNARKs), where subjects prove statements **without revealing** underlying information.
+
+Example:
+```solidity
+struct ZKProof {
+    bytes32 a;
+    bytes32 b;
+    bytes32 c;
+    uint256 publicSignals;
+}
+```
+Usage:
+```solidity
+ZKProof memory zkEvidence = ZKProof(a, b, c, publicSignals);
+bytes memory encodedProof = abi.encode(zkEvidence);
+```
+
+#### 4. Attestation-Based Evidence
+Verifiable credentials issued by a trusted third party, such as decentralized identifiers (DIDs) or attestations.
+
+Example:
+```solidity
+struct Attestation {
+    address issuer;
+    address subject;
+    bytes32 claimHash;
+    bytes signature;
+}
+```
+Encoding:
+```solidity
+bytes memory attestationData = abi.encode(Attestation(issuer, subject, claimHash, sig));
+```
+
+#### 5. Merkle Proof-Based Access
+When a subject belongs to a **Merkle tree-based** access group, a Merkle proof can be submitted to verify inclusion.
+
+Example:
+```solidity
+struct MerkleProof {
+    bytes32[] proof;
+    bytes32 root;
+    bytes32 leaf;
+}
+```
+Usage:
+```solidity
+bytes memory merkleEvidence = abi.encode(MerkleProof(proof, root, leaf));
+```
+
+### Standard Encoding and Decoding
+All evidence MUST be **encoded using `abi.encode()`** to ensure compatibility across different implementations. 
+Policies and Checkers MUST decode evidence as needed:
+
+```solidity
+function validateEvidence(bytes calldata evidence) external {
+    (address tokenAddress, uint256 tokenId) = abi.decode(evidence, (address, uint256));
+}
+```
+
+By maintaining a standardized encoding scheme, Excubiae ensures that Policies and Checkers can interpret diverse types of evidence without tightly coupling access logic to a specific authentication method.
+
 ### Private Evidence
 The framework is designed to operate entirely on-chain, with all validation and enforcement occurring within the EVM environment. This ensures transparency and auditability. Privacy is tightly coupled with the evidence used: for example, a zero-knowledge proof brings privacy preserving verification for the prover (no disclosure of secrets) while passing a token identifier as evidence has no privacy at all.
 
