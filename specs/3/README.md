@@ -292,8 +292,7 @@ Factory contracts enable efficient deployment of Policies and Checkers. Each Fac
    - MUST emit a `CloneDeployed(address)` event upon successful deployment.
 
 ## Security Considerations
-
-Implementations MUST address:
+Excubiae is a framework for defining and enforcing access control policies, but its security ultimately depends on the correctness and robustness of the implemented policies and checkers. The framework itself does not guarantee security—it provides a modular structure to enforce rules as defined by the developer. Implementers MUST carefully design their policies and checkers to avoid security risks such as replay attacks, insufficient validation, or incorrect assumptions about external contracts. Secure access control is achieved by selecting strong cryptographic verification methods, minimizing trust assumptions, and thoroughly testing validation mechanisms. The following is the complete list of things that what MUST be addressed:
 
 ### Prevention of Double-Enforcement Attacks
 
