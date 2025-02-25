@@ -2,12 +2,11 @@
 
 slug: CS-03
 title: CS-03/EXCUBIAE-V0.3.0
-name: ABAC Smart Contract Framework
+name: Excubiae Smart Contract Framework
 status: draft
 category: Standards Track
 editor: Giacomo Corrias (0xjei) <0xjei@pse.dev>
 contributors: 
-
 - ...
 - tags:
    - smart contract
@@ -28,22 +27,20 @@ This document is governed by the [1/COSS](../1) (COSS).
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
 
 # Abstract
-Excubiae is a composable framework for implementing custom, attribute-based access control policies on EVM-compatible networks. At its core, it separates the concerns of **policy** definition (*what rules to enforce*) from policy **checking** (*how to validate those rules*), enabling flexible and reusable access control patterns. The framework's mission is to enable policy enforcement through three key components: **Policies** that define access rules, **Checkers** that validate evidence, and *enforcement* mechanisms that manage the validation flow. Built on values of modularity, reusability, and security, Excubiae provides protocol developers with building blocks to create robust attribute-based access control (ABAC) systems. In fact, the name "[Excubiae](https://www.nihilscio.it/Manuali/Lingua%20latina/Verbi/Coniugazione_latino.aspx?verbo=excubia&lang=IT_#:~:text=1&text=excubia%20%3D%20sentinella...%20guardia,%2C%20excubia%20%2D%20Sostantivo%201%20decl.)" comes from the ancient Roman guards who kept watch and enforced access control - an apt metaphor for a system designed to protect smart contract access through configurable policies.
+Excubiae is a composable framework for implementing custom, attribute-based access control policies on EVM-compatible networks. At its core, it separates the concerns of **policy** definition (*what rules to enforce*) from policy **checking** (*how to validate those rules*), enabling flexible and reusable access control patterns. The framework's mission is to enable policy enforcement through three key components: **Policies** that define access rules, **Checkers** that validate evidence, and *enforcement* mechanisms that manage the validation flow. Built on values of modularity and reusability, Excubiae provides protocol developers with building blocks to create robust Attribute-Based Access Control (ABAC) systems. In fact, the name "[Excubiae](https://www.nihilscio.it/Manuali/Lingua%20latina/Verbi/Coniugazione_latino.aspx?verbo=excubia&lang=IT_#:~:text=1&text=excubia%20%3D%20sentinella...%20guardia,%2C%20excubia%20%2D%20Sostantivo%201%20decl.)" comes from the ancient Roman guards who kept watch and enforced access control - an apt metaphor for a system designed to protect smart contract access through configurable gatekeepers.
 
 # Motivation
-
 In the evolving blockchain ecosystem, protocols continuously generate new forms of **verifiable evidence** and **proofs** (either backed by cryptography or not). Current access control mechanisms in smart contracts are often rigid, tightly coupled, and lack interoperability, making them unsuitable for interconnection and communication. While these protocols excel at producing such evidence, integrating them into access control systems outside their standard ways of doing it (e.g., APIs / apps / libs / modules) remains challenging. Excubiae aims to bridge this gap by providing a universal framework for composing and enforcing access control policies upon verifiable attributes satisfaction (criterias), expanding and making interoperable forms of on-chain evidence, serving as a foundational layer for ABAC across the ecosystem. In fact, the framework serves multiple audiences: protocol developers integrating access control into their systems, as smart contract engineers implementing custom validation logic for access control on-chain.
 
 # Specification
 
 ## System Requirements
-
 The implementations MUST provide:
 
 ### Smart Contracts
 
 #### 1. Checker
-Checker contracts validate evidence against predefined rules. Base implementations MUST:
+Checker contracts validate evidence against predefined rules ("verifiable attributes"). Base implementations MUST:
 
 - Provide a stateless validation mechanism through the `check()` method.
 - Support encoded evidence via `bytes` parameters.
@@ -58,7 +55,7 @@ Advanced implementations MUST:
    - **POST**: Final validation after main enforcement.
 
 #### 2. Policy
-Policy contracts define and enforce access rules based on evidence provided by subjects. Base implementations MUST:
+Policy contracts define and enforce Checker rules on evidence provided by subjects. Base implementations MUST:
 
 - Define a clear target address representing the protected resource.
 - Track enforcement state for subjects.
@@ -69,9 +66,9 @@ Policy contracts define and enforce access rules based on evidence provided by s
 Advanced implementations MUST:
 
 - Delegate validation to a designated Checker, taking a supplementary parameter specifying the type of check among the following:
-   - **PRE**: Initial validation before main enforcement.
+   - **PRE**: Initial validation before main enforcement (can be skipped).
    - **MAIN**: Core validation (as for base implementation).
-   - **POST**: Final validation after main enforcement.
+   - **POST**: Final validation after main enforcement (can be skipped).
 
 #### 3. Factory
 Factory contracts enable efficient deployment of Policies and Checkers. Implementations MUST:
@@ -81,22 +78,29 @@ Factory contracts enable efficient deployment of Policies and Checkers. Implemen
 - Enable customizable deployment parameters.
 
 ---
+## Glossary
+This section defines key terms used throughout this specification to ensure clarity and consistency.
+
+- ABAC (Attribute-Based Access Control): A security model that grants access based on verifiable attributes rather than predefined roles.
+- RBAC (Role-Based Access Control): A security model that grants access based on predefined and assigned roles.
+- Attestation: A verifiable claim or credential issued by a trusted party, proving a subject meets certain conditions.
+- Checker: A smart contract responsible for validating evidence submitted by a subject.
+- Evidence: Cryptographic proof, attestation, or data submitted by a subject to prove eligibility for access.
+- EVM (Ethereum Virtual Machine): The runtime environment for executing smart contracts on Ethereum-compatible networks.
+- Nullifier: A mechanism to prevent replay attacks by ensuring each proof or credential is used only once.
+- Policy: A smart contract defining access control rules and delegating validation to checkers.
+- Proxy Pattern: A design pattern that allows upgradeability of smart contracts by separating storage from logic (e.g., EIP-2535 Diamond Standard).
+- Selective Disclosure: A privacy-preserving mechanism that allows users to reveal only necessary parts of their identity or credentials.
+- Subject: The entity (e.g., user, contract, or external account) requesting access to a protected resource.
+- Target: The entity, contract, or resource for which an access control policy is enforced.
+- Verifiable Attributes: Data points that can be independently verified, such as on-chain credentials, cryptographic signatures, or attestations.
 
 ## Preliminaries
 
 ### Access Control Mode
-Excubiae implements an Attribute-Based Access Control (ABAC) model where access decisions are based on attributes associated with the Subject. This differs from Role-Based Access Control (RBAC) by allowing more flexible, fine-grained permissions based on arbitrary verifiable evidence rather than predefined roles.
-
-### Attribute-based Verification
-The verifiable data / proof must be provided as encoded `bytes` to ensure flexibility and future compatibility. The encoded data MUST serve to validate the full set of verifiable attributes specified in the Checker contract. This approach allows:
-
-- Packaging of multiple validation parameters in a single parameter through encoding
-- Protocol agnostic evidence validation
-- Forward compatibility with new validation schemes
-- Custom interpretation by specialized Checkers
+Excubiae implements an Attribute-Based Access Control (ABAC) model where access decisions are based on attributes associated with the subject. This differs from Role-Based Access Control (RBAC) by allowing more flexible, fine-grained permissions based on arbitrary verifiable evidence rather than predefined roles.
 
 ### Evidence Structure
-
 Excubiae supports a flexible evidence format that enables diverse verification methods. Evidence refers to cryptographic proofs, attestations, or data that a subject provides to gain access to a protected resource. All evidence is encoded as `bytes` for future compatibility, composability, and protocol-agnostic validation. Evidence MAY take the following forms:
 
 #### 1. Basic Encoded Evidence
@@ -122,7 +126,7 @@ bytes32 evidenceHash = keccak256(abi.encodePacked(0xdeadbeef, 0xabc123));
 ```
 
 #### 3. Zero-Knowledge Proofs (ZKPs)
-For privacy-preserving authentication, Excubiae supports on-chain verifiable proofs (e.g., ZK-SNARKs), where subjects prove statements **without revealing** underlying information.
+For privacy-preserving authentication, Excubiae supports on-chain verifiable proofs (e.g., ZK-SNARKs), where subjects prove statements without revealing / selectively disclosing underlying information.
 
 Example:
 ```solidity
@@ -157,7 +161,7 @@ bytes memory attestationData = abi.encode(Attestation(issuer, subject, claimHash
 ```
 
 #### 5. Merkle Proof-Based Access
-When a subject belongs to a **Merkle tree-based** access group, a Merkle proof can be submitted to verify inclusion.
+When a subject belongs to a Merkle tree-based access group, a Merkle proof can be submitted to verify inclusion.
 
 Example:
 ```solidity
@@ -173,19 +177,19 @@ bytes memory merkleEvidence = abi.encode(MerkleProof(proof, root, leaf));
 ```
 
 ### Standard Encoding and Decoding
-All evidence MUST be **encoded using `abi.encode()`** to ensure compatibility across different implementations. 
-Policies and Checkers MUST decode evidence as needed:
+By maintaining a standardized encoding scheme, Excubiae ensures that Policies and Checkers can interpret diverse types of evidence without tightly coupling access logic to a specific authentication method. All evidence MUST be encoded using `abi.encode()` to ensure compatibility across different implementations. Policies and Checkers MUST decode evidence as needed:
 
 ```solidity
+// example.
 function validateEvidence(bytes calldata evidence) external {
     (address tokenAddress, uint256 tokenId) = abi.decode(evidence, (address, uint256));
 }
 ```
 
-By maintaining a standardized encoding scheme, Excubiae ensures that Policies and Checkers can interpret diverse types of evidence without tightly coupling access logic to a specific authentication method.
-
 ### Private Evidence
 The framework is designed to operate entirely on-chain, with all validation and enforcement occurring within the EVM environment. This ensures transparency and auditability. Privacy is tightly coupled with the evidence used: for example, a zero-knowledge proof brings privacy preserving verification for the prover (no disclosure of secrets) while passing a token identifier as evidence has no privacy at all.
+
+---
 
 ## Framework Architecture
 
@@ -211,7 +215,7 @@ The framework is designed to operate entirely on-chain, with all validation and 
 ```
 
 ### Flow
-The system MUST implement the following flow when a **subject** (i.e., EOA or smart contract address) attempts to access a protected **target** (i.e., smart contract protected method / resource). Note that the following steps are generic and assumes that Checker and Policy clones have been successfully deployed and initialized from respective Factory contracts.
+The system MUST implement the following flow when a subject attempts to access a protected target. Note that the following steps are generic and assumes that Checker and Policy clones have been successfully deployed and initialized from respective Factory contracts.
 
 1. Subject provides evidence to a policy.
 2. Policy delegates validation to its checker.
@@ -219,7 +223,7 @@ The system MUST implement the following flow when a **subject** (i.e., EOA or sm
 4. Policy enforces the checker's decision & keeps track of the subject.
 
 #### 1. Checker
-A Checker in Excubiae is responsible for validating access conditions. Think of it as the rulebook that defines what constitutes valid access - it receives evidence and determines whether it meets the specified criteria. The checker remains deliberately stateless, focusing solely on validation logic. This design allows checkers to be shared across different policies and enables clear, auditable validation rules. The framework offers two checker variants: BaseChecker and AdvancedChecker.
+A Checker in Excubiae is responsible for validating access conditions. Think of it as the rulebook that defines what constitutes valid access - it receives evidence and determines whether it meets the specified criteria. This contract MUST remain deliberately stateless, focusing solely on validation logic. This design allows checkers to be shared across different policies and enables clear, auditable validation rules. The framework offers two checker variants: BaseChecker and AdvancedChecker.
 
 The Checker MUST be a clonable contract and MUST provide the following internal methods:
 - `_initialize()`: Method to initialize the clone. 
@@ -230,12 +234,10 @@ The Checker MUST be a clonable contract and MUST provide the following internal 
    - MUST return the appended bytes extracted from the clone.
 
 The BaseChecker MUST provide a stateless validation mechanism through the `check()` method which takes:
-
 - `subject: address` - An address (EOA or contract) attempting to access a protected resource.
 - `evidence: bytes calldata` - Encoded data provided by a subject to prove they satisfy access criteria.
 
 The AdvancedChecker MUST provide a stateless validation mechanism through the `check()` method which takes:
-
 - `subject: address` - An address (EOA or contract) attempting to access a protected resource.
 - `evidence: bytes calldata` - Encoded data provided by a subject to prove they satisfy access criteria.
 - `checkType: Check` - The phase of validation to execute (PRE, MAIN, POST).
@@ -295,7 +297,6 @@ Factory contracts enable efficient deployment of Policies and Checkers. Each Fac
 Excubiae is a framework for defining and enforcing access control policies, but its security ultimately depends on the correctness and robustness of the implemented policies and checkers. The framework itself does not guarantee security—it provides a modular structure to enforce rules as defined by the developer. Implementers MUST carefully design their policies and checkers to avoid security risks such as replay attacks, insufficient validation, or incorrect assumptions about external contracts. Secure access control is achieved by selecting strong cryptographic verification methods, minimizing trust assumptions, and thoroughly testing validation mechanisms. The following is the complete list of things that what MUST be addressed:
 
 ### Prevention of Double-Enforcement Attacks
-
 Double-enforcement attacks occur when a subject attempts to leverage the same validation evidence multiple times or across different contexts. To prevent these attacks:
 - Track unique identifiers for evidence or validation attempts
    - SHOULD implement mappings that mark evidence as "spent" after first use
@@ -306,7 +307,6 @@ Double-enforcement attacks occur when a subject attempts to leverage the same va
    - MUST track separate state for each validation phase.
 
 ### Secure Proxy Initialization
-
 The minimal proxy pattern with immutable args introduces specific security considerations:
 - Ensure initialization is performed in the same transaction as deployment
    - MUST implement secure ownership transfer during initialization
@@ -315,7 +315,6 @@ The minimal proxy pattern with immutable args introduces specific security consi
    - Restrict deployment capabilities to authorized addresses
 
 ### Clear Separation Between Validation and State Management
-
 Maintaining separation of concerns is critical for security:
 - Ensure Checkers remain purely stateless for validation
 - Avoid side effects or state changes in Checker contracts
@@ -325,32 +324,29 @@ Maintaining separation of concerns is critical for security:
 - Implement checks-effects-interactions pattern in Policy operations
 
 ### Additional Considerations
-
 Implementations SHOULD also consider:
 
 1. **Gas Optimization**
 Efficient gas usage is a key consideration when implementing policies and checkers. Implementers SHOULD:
-
 - Balance security with gas efficiency by minimizing redundant on-chain computations.
 - Analyze gas costs for various validation scenarios to ensure feasibility for real-world use cases.
 - Document gas expectations for implementers to provide clarity on cost implications.
 
 2. **Upgradeability Patterns**
 Policies MAY be upgradeable by utilizing proxy patterns (e.g., [EIP-2535 Diamond Standard](https://eips.ethereum.org/EIPS/eip-2535)) or by allowing governance mechanisms to deploy updated versions. 
-
 - If implementing upgradeability, document security implications to avoid unforeseen risks.
 - Consider using transparent proxy patterns where applicable, ensuring compatibility with governance structures.
 - Implement secure upgrade mechanisms with appropriate time delays to allow for security reviews before changes take effect.
 
 3. **Composability Risks**
 Since Excubiae is designed to integrate with multiple protocols, developers SHOULD carefully consider:
-
 - Potential for unexpected interactions with other protocols that may lead to security vulnerabilities.
 - Assumptions about external contracts, ensuring predictable behavior when integrating with third-party protocols.
 - Implementing fail-safe mechanisms for integration failures, such as timeouts or fallback execution paths.
 
-# Implementation Notes
+---
 
+# Implementation Notes
 Excubiae is structured as a [TypeScript/Solidity monorepo](https://github.com/privacy-scaling-explorations/excubiae) using [Yarn](https://yarnpkg.com/getting-started) as its package manager. The project is organized into distinct packages and applications:
 
 ```
@@ -377,12 +373,10 @@ When implementing a policy, the first step is defining the criteria for passing 
 For example, in a voting system where voters must own a specific NFT to participate, the validation logic resides in a **Checker** contract, while a **Policy** enforces the validation result.
 
 A checker encapsulates validation logic. The [BaseERC721Checker](https://github.com/privacy-scaling-explorations/excubiae/blob/main/packages/contracts/contracts/test/examples/base/BaseERC721Checker.sol) is a clonable contract that verifies NFT ownership. To implement a clonable checker:
-
 - Override `_initialize()`, which is executed only once at deployment time to store immutable arguments in the contract state.
 - Implement `_check()`, defining the validation logic.
 
 Once the checker is in place, a **Policy** references it to enforce validation. The [BaseERC721Policy](https://github.com/privacy-scaling-explorations/excubiae/blob/main/packages/contracts/contracts/test/examples/base/BaseERC721Policy.sol) demonstrates how to:
-
 - Extend a base policy contract.
 - Provide a unique trait identifier.
 
@@ -545,7 +539,6 @@ contract BaseERC721PolicyFactory is Factory {
 This approach enables efficient deployments and customization at deploy time. For example, different `_nftAddress` values can be set per clone, allowing multiple NFT collections to use the same validation logic while remaining independent.
 
 ### Integrating a Policy
-
 The [BaseVoting](https://github.com/privacy-scaling-explorations/excubiae/blob/main/packages/contracts/contracts/test/examples/base/BaseVoting.sol) contract demonstrates a complete implementation of policy integration. It shows how to:
 - Initialize the policy
 - Enforce checks before actions
@@ -591,7 +584,6 @@ contract BaseVoting {
 ```
 
 #### Tracking Mechanisms to Prevent Double Enforcement
-
 Each Policy in Excubiae must implement its own tracking mechanism to prevent double enforcement. This ensures that the same proof or validation cannot be reused maliciously. The design of the tracking system may vary depending on the specific requirements of the policy.
 
 Example from [SemaphorePolicy](https://github.com/privacy-scaling-explorations/excubiae/blob/70967948b4025c3f7bbbf833c06cf5944187837d/packages/contracts/contracts/extensions/SemaphorePolicy.sol#L34):
