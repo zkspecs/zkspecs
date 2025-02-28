@@ -81,6 +81,8 @@ The secret scalar is a value derived from the private key and used in the circui
 
 Using the secret scalar in the circuit instead of the private key allows it to skip steps 1, 2, 3 in the generation of the public key defined in [RFC 8032](https://www.rfc-editor.org/rfc/rfc8032#section-5.1.5), making the circuit more efficient and simple.
 
+Instead of SHA-512, the Blake 1 hash function is used to generate the secret scalar. This decision was made to maintain compatibility with the [circomlibjs implementation](https://github.com/iden3/circomlibjs/blob/main/src/eddsa.js) and the protocols that rely on it.
+
 ### 2. Group
 
 A group is a collection of identities represented in a structured format.
