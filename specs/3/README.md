@@ -1,7 +1,7 @@
 ---
 
 slug: CS-03
-title: CS-03/EXCUBIAE-V0.3.0
+title: CS-03/EXCUBIAE
 name: Excubiae Smart Contract Framework
 status: draft
 category: Standards Track
