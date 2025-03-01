@@ -1,6 +1,6 @@
 ---
 slug: 3
-title: 3/Semaphore V4
+title: 3/SEMAPHORE-V4
 name: Semaphore Protocol V4
 status: draft
 category: Standards Track
